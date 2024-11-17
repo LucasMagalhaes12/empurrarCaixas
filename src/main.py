@@ -1,7 +1,4 @@
-from render import Render
-import engine
+from engine import Engine
 
-
-engine = engine.Engine()
+engine = Engine()
 engine.update()
-

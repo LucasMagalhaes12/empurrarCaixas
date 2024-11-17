@@ -2,73 +2,146 @@ from render import Render
 
 
 map1 = [
-    [4, 4, 4, 4, 4, 4, 4, 4],
-    [4, 4, 3, 3, 3, 3, 3, 4],
-    [4, 4, 3, 0, 0, 0, 3, 4],
-    [4, 4, 3, 0, 0, 3, 3, 4],
-    [4, 4, 3, 3, 2, 3, 4, 4],
-    [4, 4, 4, 3, 1, 3, 4, 4],
-    [4, 4, 4, 3, 3, 3, 4, 4],
-    [4, 4, 4, 4, 4, 4, 4, 4],
+    [5, 5, 5, 5, 5, 5, 5, 5],
+    [5, 5, 4, 4, 4, 4, 4, 5],
+    [5, 5, 4, 0, 0, 3, 4, 5],
+    [5, 5, 4, 0, 0, 0, 4, 5],
+    [5, 5, 4, 4, 2, 0, 4, 5],
+    [5, 5, 5, 4, 1, 0, 4, 5],
+    [5, 5, 5, 4, 4, 4, 4, 5],
+    [5, 5, 5, 5, 5, 5, 5, 5],
 ]
 
-# 0: moves | 1: player | 2: caixas | 3: wall | 4: void
+map2 = [
+    [5, 5, 5, 5, 5, 5, 5, 5],
+    [5, 4, 4, 4, 4, 4, 4, 5],
+    [5, 4, 0, 0, 3, 3, 4, 5],
+    [5, 4, 0, 2, 0, 0, 4, 5],
+    [5, 4, 0, 0, 2, 2, 4, 5],
+    [5, 4, 0, 0, 1, 0, 4, 5],
+    [5, 4, 4, 4, 4, 4, 4, 5],
+    [5, 5, 5, 5, 5, 5, 5, 5],
+]
+
+map3 = [
+    [5, 5, 5, 5, 5, 5, 5, 5],
+    [5, 5, 4, 4, 4, 4, 4, 5],
+    [5, 5, 4, 0, 0, 3, 4, 5],
+    [5, 5, 4, 0, 0, 4, 4, 5],
+    [5, 5, 4, 4, 2, 4, 5, 5],
+    [5, 5, 5, 4, 1, 4, 5, 5],
+    [5, 5, 5, 4, 4, 4, 5, 5],
+    [5, 5, 5, 5, 5, 5, 5, 5],
+]
+
 
 class Engine:
     def __init__(self):
-        self.__color = [(0.9, 0.9, 0.9), (0.4, 0.6, 1), (0.98, 0.643, 0.086), (0.4, 0.4, 0.4), (0.5, 0.5, 0.5)]
-        self.__render = Render()
-        self.__mapCurrent = map1
+        #                   0: moves       1: player        2: caixas            3: point          4: wall           5: void
+        self.__color = [(0.9, 0.9, 0.9), (0.4, 0.6, 1), (0.98, 0.643, 0.086), (1.0, 0.0, 0.0), (0.4, 0.4, 0.4), (0.5, 0.5, 0.5)]
+        self.__render = Render() # rectWidth=20, rectHeight=20)
+        self.__level = -1
+        self.__maps = [map1, map2, map3]
         self.__playerPos = 0, 0
+        self.__winPos = []
+        
         self.MOVE = 0
         self.PLAYER = 1
         self.BOX = 2
-        self.WALL = 3
-        self.VOID = 4
+        self.POINT = 3
+        self.WALL = 4
+        self.VOID = 5
 
 
-    def updateMap(self, mapSet):
-        nL = len(mapSet)
-        nC = len(mapSet[0])
-        for x in range(nL):
-            for y in range(nC):
-                if mapSet[y][x] == 1:
+    def startMap(self):
+        self.__level += 1
+        if self.__level >= len(self.__maps):
+            return False
+        
+        self.__mapCurrent = self.__maps[self.__level]
+        self.__winPos = []
+        
+        for x in range(len(self.__mapCurrent)):
+            for y in range(len(self.__mapCurrent[0])):
+
+                if self.__mapCurrent[y][x] == self.PLAYER:
                     self.__playerPos = x, y
-                self.__render.drawRects(x*50, y*50, color=self.__color[mapSet[y][x]])
+
+                elif self.__mapCurrent[y][x] == self.POINT:
+                    self.__winPos.append([x, y])
+
+        return True
 
 
-    def move(self, map):
+    def drawMap(self, mapSet):
+        for x in range(len(mapSet)):
+            for y in range(len(mapSet[0])):
+                self.__render.drawRects(x*self.__render.get_rectWidth(), y*self.__render.get_rectHeight(), self.__color[mapSet[y][x]])
+
+
+    def get_controls(self):
         inputKeyboard = input("move: ")
-        x, y = self.__playerPos
+        
         moveX = 0
         moveY = 0
+
         match inputKeyboard:
             case 'w':
-                moveX = -1
-            case 's':
-                moveX = 1
-            case 'a':
                 moveY = -1
-            case 'd':
+            case 's':
                 moveY = 1
-            
-        if map[y+moveX][x+moveY] == self.MOVE:
-            map[y+moveX][x+moveY] = self.PLAYER
-            map[y][x] = self.MOVE
-            
-        elif map[y+moveX][x+moveY] == self.BOX:
-            if map[y+moveX*2][x+moveY*2] == self.MOVE:
-                map[y+moveX*2][x+moveY*2] = self.BOX
-                map[y+moveX][x+moveY] = self.PLAYER
+            case 'a':
+                moveX = -1
+            case 'd':
+                moveX = 1   
+        return (moveX, moveY)
+
+
+    def move(self, move:tuple, map):
+        moveX, moveY = move
+        x, y = self.__playerPos
+        
+        if map[y+moveY][x+moveX] == self.MOVE or map[y+moveY][x+moveX] == self.POINT:
+            map[y+moveY][x+moveX] = self.PLAYER
+            self.__playerPos = x+moveX, y+moveY
+            if [x, y] not in self.__winPos:
                 map[y][x] = self.MOVE
+            else:
+                map[y][x] = self.POINT
+            
+        elif map[y+moveY][x+moveX] == self.BOX:
+            if map[y+moveY*2][x+moveX*2] == self.MOVE or map[y+moveY*2][x+moveX*2] == self.POINT:
+                map[y+moveY*2][x+moveX*2] = self.BOX
+                map[y+moveY][x+moveX] = self.PLAYER
+                self.__playerPos = x+moveX, y+moveY
+                if [x, y] not in self.__winPos:
+                    map[y][x] = self.MOVE
+                else:
+                    map[y][x] = self.POINT
+            
+
+    def win(self, map):
+        for x, y in self.__winPos:
+            if map[y][x] != self.BOX:
+                return False
+        return True
+
+
+    def updateScreen(self):
+        self.__render.clear()
+        self.drawMap(self.__mapCurrent)
+        self.__render.save()
 
 
     def update(self):
-        self.__render.clear()
-        self.updateMap(self.__mapCurrent)
-        self.__render.save()
+        self.startMap()
         while True:
-            self.__render.clear()
-            self.move(self.__mapCurrent)
-            self.updateMap(self.__mapCurrent)
-            self.__render.save()
+            # for i in self.__mapCurrent:
+            #     print(i)
+            self.updateScreen()
+            self.move(self.get_controls(), self.__mapCurrent)
+            if self.win(self.__mapCurrent):
+                self.updateScreen()
+                if not self.startMap():
+                    break
+                
